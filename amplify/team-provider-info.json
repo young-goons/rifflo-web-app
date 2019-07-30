@@ -1,0 +1,33 @@
+{
+    "riffloenv": {
+        "awscloudformation": {
+            "AuthRoleName": "rifflo-riffloenv-20190720005437-authRole",
+            "UnauthRoleArn": "arn:aws:iam::149421292640:role/rifflo-riffloenv-20190720005437-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::149421292640:role/rifflo-riffloenv-20190720005437-authRole",
+            "Region": "us-east-1",
+            "DeploymentBucketName": "rifflo-riffloenv-20190720005437-deployment",
+            "UnauthRoleName": "rifflo-riffloenv-20190720005437-unauthRole",
+            "StackName": "rifflo-riffloenv-20190720005437",
+            "StackId": "arn:aws:cloudformation:us-east-1:149421292640:stack/rifflo-riffloenv-20190720005437/9f7c9f40-aac3-11e9-974b-0a4c9dfbdd94"
+        },
+        "categories": {
+            "function": {
+                "rifflo1c959a64CustomMessage": {
+                    "REDIRECTURL": "https://localhost:3000/",
+                    "EMAILSUBJECT": "younggoons1@gmail.com",
+                    "EMAILMESSAGE": "younggoons1@gmail.com"
+                },
+                "rifflo1c959a64PreSignup": {
+                    "DOMAINBLACKLIST": ""
+                }
+            },
+            "auth": {
+                "rifflo1c959a64": {
+                    "facebookAppIdUserPool": "892881471046161",
+                    "facebookAppSecretUserPool": "5f9893e21a40f9506282aff7902ad885",
+                    "hostedUIProviderCreds": "[{\"ProviderName\":\"Facebook\",\"client_id\":\"892881471046161\",\"client_secret\":\"5f9893e21a40f9506282aff7902ad885\"}]"
+                }
+            }
+        }
+    }
+}

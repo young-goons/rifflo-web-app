@@ -1,0 +1,14 @@
+{
+    "trigger": true,
+    "modules": [
+        "verification-link"
+    ],
+    "parentResource": "rifflo1c959a64",
+    "functionName": "rifflo1c959a64CustomMessage",
+    "parentStack": "auth",
+    "triggerEnvs": "[{\"key\":\"RESOURCENAME\",\"value\":\"resourceName\"}]",
+    "triggerTemplate": "CustomMessage.json.ejs",
+    "roleName": "rifflo1c959a64CustomMessage",
+    "skipEdit": true,
+    "resourceName": "rifflo1c959a64CustomMessage"
+}

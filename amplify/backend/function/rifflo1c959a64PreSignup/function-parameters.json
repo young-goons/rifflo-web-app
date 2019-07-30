@@ -1,0 +1,14 @@
+{
+    "trigger": true,
+    "modules": [
+        "email-filter-blacklist"
+    ],
+    "parentResource": "rifflo1c959a64",
+    "functionName": "rifflo1c959a64PreSignup",
+    "parentStack": "auth",
+    "triggerEnvs": "[]",
+    "triggerTemplate": "PreSignup.json.ejs",
+    "roleName": "rifflo1c959a64PreSignup",
+    "skipEdit": true,
+    "resourceName": "rifflo1c959a64PreSignup"
+}

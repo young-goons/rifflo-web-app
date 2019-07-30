@@ -1,0 +1,102 @@
+{
+    "identityPoolName": "rifflo1c959a64_identitypool_1c959a64",
+    "allowUnauthenticatedIdentities": false,
+    "openIdLambdaRoleName": "rifflo1c959a64_openid_lambda_role",
+    "resourceNameTruncated": "rifflo1c959a64",
+    "userPoolName": "rifflo1c959a64_userpool_1c959a64",
+    "autoVerifiedAttributes": [
+        "email"
+    ],
+    "mfaConfiguration": "OFF",
+    "mfaTypes": [
+        "SMS Text Message"
+    ],
+    "smsAuthenticationMessage": "Your authentication code is {####}",
+    "smsVerificationMessage": "Your verification code is {####}",
+    "emailVerificationSubject": "Your verification code",
+    "emailVerificationMessage": "Your verification code is {####}",
+    "defaultPasswordPolicy": false,
+    "passwordPolicyMinLength": 8,
+    "passwordPolicyCharacters": [],
+    "requiredAttributes": [
+        "email"
+    ],
+    "userpoolClientName": "rifflo1c959a64_app_client",
+    "userpoolClientGenerateSecret": true,
+    "userpoolClientRefreshTokenValidity": 30,
+    "userpoolClientWriteAttributes": [
+        "email"
+    ],
+    "userpoolClientReadAttributes": [
+        "email"
+    ],
+    "mfaLambdaRole": "rifflo1c959a64_totp_lambda_role",
+    "userpoolClientLambdaRole": "rifflo1c959a64_userpoolclient_lambda_role",
+    "userpoolClientSetAttributes": false,
+    "resourceName": "rifflo1c959a64",
+    "authSelections": "identityPoolAndUserPool",
+    "authRoleName": {
+        "Ref": "AuthRoleName"
+    },
+    "unauthRoleName": {
+        "Ref": "UnauthRoleName"
+    },
+    "authRoleArn": {
+        "Fn::GetAtt": [
+            "AuthRole",
+            "Arn"
+        ]
+    },
+    "unauthRoleArn": {
+        "Fn::GetAtt": [
+            "UnauthRole",
+            "Arn"
+        ]
+    },
+    "useDefault": "defaultSocial",
+    "hostedUI": true,
+    "additionalQuestions": [
+        "requiredAttributes",
+        "triggers"
+    ],
+    "triggers": "{\"CustomMessage\":[\"verification-link\"],\"PreSignup\":[\"email-filter-blacklist\"]}",
+    "hostedUIDomainName": "rifflo",
+    "newCallbackURLs": [
+        "https://localhost:3000/"
+    ],
+    "newLogoutURLs": [
+        "https://localhost:3000/"
+    ],
+    "authProvidersUserPool": [
+        "Facebook"
+    ],
+    "hostedUIProviderMeta": "[{\"ProviderName\":\"Facebook\",\"authorize_scopes\":\"email,public_profile\",\"AttributeMapping\":{\"email\":\"email\",\"username\":\"id\"}}]",
+    "oAuthMetadata": "{\"AllowedOAuthFlows\":[\"code\"],\"AllowedOAuthScopes\":[\"phone\",\"email\",\"openid\",\"profile\",\"aws.cognito.signin.user.admin\"],\"CallbackURLs\":[\"https://localhost:3000/\"],\"LogoutURLs\":[\"https://localhost:3000/\"]}",
+    "verificationBucketName": "rifflo1c959a64verificationbucket",
+    "CustomMessage": "rifflo1c959a64CustomMessage",
+    "PreSignup": "rifflo1c959a64PreSignup",
+    "parentStack": {
+        "Ref": "AWS::StackId"
+    },
+    "permissions": [],
+    "dependsOn": [
+        {
+            "category": "function",
+            "resourceName": "rifflo1c959a64CustomMessage",
+            "triggerProvider": "Cognito",
+            "attributes": [
+                "Arn",
+                "Name"
+            ]
+        },
+        {
+            "category": "function",
+            "resourceName": "rifflo1c959a64PreSignup",
+            "triggerProvider": "Cognito",
+            "attributes": [
+                "Arn",
+                "Name"
+            ]
+        }
+    ]
+}
