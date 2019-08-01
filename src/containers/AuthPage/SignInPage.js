@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
-import { Button, Form, Grid, Message, Icon, Image, Segment, Modal } from 'semantic-ui-react';
+import {Button, Form, Grid, Message, Icon, Image, Segment, Modal, Dimmer, Loader} from 'semantic-ui-react';
 import { Auth } from 'aws-amplify';
 
 import styles from './AuthPage.module.css';
@@ -11,9 +11,10 @@ class AuthPage extends Component {
         password: '',
         confirmCode: '',
         isAuthenticated: false,
-        warning: "",
+        warning: '',
         needVerification: false,
-        isVerified: false
+        resendCodeMessage: '',
+        processing: false
     };
 
     emailInputHandler = (event) => {
@@ -29,50 +30,58 @@ class AuthPage extends Component {
     };
 
     signInHandler = () => {
-        Auth.signIn({username: this.state.email, password: this.state.password})
-            .then(() => {
-                console.log('log in success');
-                this.setState({isAuthenticated: true});
-            })
-            .catch(error => {
-                console.log(error);
-                if (error.code === 'UserNotConfirmedException') {
-                    Auth.resendSignUp(this.state.email)
-                        .then(() => {
-                            this.setState({needVerification: true});
-                        })
-                        .catch(err => {
-                            console.log(err);
-                        });
-                } else {
-                    this.setState({warning: error.message});
-                }
+        this.setState({processing: true}, () => {
+            Auth.signIn({username: this.state.email, password: this.state.password})
+                .catch(error => {
+                    console.log(error);
+                    if (error.code === 'UserNotConfirmedException') {
+                        Auth.resendSignUp(this.state.email)
+                            .then(() => {
+                                this.setState({needVerification: true, processing: false, warning: ''});
+                            })
+                            .catch(err => {
+                                console.log(err);
+                                this.setState({warning: err.message, processing: false});
+                            });
+                    } else {
+                        this.setState({warning: error.message});
+                    }
+                });
+        });
+    };
+
+    resendCodeHandler = () => {
+        if (!this.state.processing) {
+            this.setState({processing: true}, () => {
+                Auth.resendSignUp(this.state.email)
+                    .then(() => {
+                        this.setState({resendCodeMessage: "Verification Code Sent!", processing: false, warning: ''});
+                    })
+                    .catch(error => {
+                        this.setState({warning: error.message, processing: false});
+                    });
             });
+        }
     };
 
     confirmCodeHandler = () => {
-        Auth.confirmSignUp(this.state.email, this.state.confirmCode, {
-            // Optional. Force user confirmation irrespective of existing alias. By default set to True.
-            forceAliasCreation: true
-        })
-            .then((data) => {
-                this.setState({isVerified: true});
-            })
-            .catch((error) => {
-                this.setState({warning: "Error in Confirming"});
-            });
+        this.setState({processing: true, resendCodeMessage: ''}, () => {
+            Auth.confirmSignUp(this.state.email, this.state.confirmCode, {forceAliasCreation: true})
+                .then((data) => {
+                    this.setState({needVerification: false});
+                    return Auth.signIn({
+                        username: this.state.email,
+                        password: this.state.password
+                    });
+                })
+                .catch((error) => {
+                    console.log(error);
+                    this.setState({warning: error.message, processing: false, resendCodeMessage: ''});
+                });
+        });
     };
 
     render() {
-        // const { from } = this.props.location.state || { from: { pathname: '/' } };
-        // const from = {pathname: '/'};
-        // if (this.state.isAuthenticated) {
-        //     console.log('auth redirect');
-        //     return (
-        //         <Redirect to={from}/>
-        //     );
-        // }
-
         let warningDiv;
         if (this.state.warning !== '') {
             warningDiv = (
@@ -114,6 +123,34 @@ class AuthPage extends Component {
             );
         }
 
+        let forgotPasswordDiv, resendCodeDiv;
+        if (this.state.needVerification) {
+            resendCodeDiv = (
+                <div className={styles.resendCodeDiv}>
+                    <span onClick={this.resendCodeHandler} className={this.state.processing ? '' : styles.resendCodeSpan}>
+                        Resend Verification Code
+                    </span>
+                </div>
+            );
+        } else {
+            forgotPasswordDiv = (
+                <div className={styles.forgotPasswordDiv}>
+                    Forgot your password?
+                </div>
+            );
+        }
+
+        let resendCodeMessageDiv;
+        if (this.state.resendCodeMessage !== '') {
+            resendCodeMessageDiv = (
+                <div className={styles.authWarningDiv}>
+                    <Message attached="bottom" positive>
+                        { this.state.resendCodeMessage }
+                    </Message>
+                </div>
+            )
+        }
+
         return (
             <Grid centered columns={3} verticalAlign="middle" style={{height: '100%'}}>
                 <Grid.Column className={styles.signInForm}>
@@ -123,39 +160,43 @@ class AuthPage extends Component {
                     <div className={styles.signInSubHeader}>
                         Discover and Share Music
                     </div>
-                    <Segment>
-                        <Form size="large">
-                            <Form.Input
-                                fluid
-                                icon="mail"
-                                iconPosition="left"
-                                type="email"
-                                placeholder="Email address"
-                                value={this.state.email}
-                                onChange={this.emailInputHandler}
-                            />
-                            <Form.Input
-                                fluid
-                                icon="lock"
-                                iconPosition="left"
-                                placeholder="Password"
-                                type="password"
-                                value={this.state.password}
-                                onChange={this.passwordInputHandler}
-                            />
-                            { verificationForm }
-                            Resend Verification Code
-                            { signInButton }
-                        </Form>
-                        { warningDiv }
-                    </Segment>
+                    <Dimmer.Dimmable as={Segment} dimmed={this.state.processing}>
+                        <Dimmer active={this.state.processing} inverted>
+                            <Loader>Processing</Loader>
+                        </Dimmer>
+                        <Segment>
+                            <Form size="large">
+                                <Form.Input
+                                    fluid
+                                    icon="mail"
+                                    iconPosition="left"
+                                    type="email"
+                                    placeholder="Email address"
+                                    value={this.state.email}
+                                    onChange={this.emailInputHandler}
+                                />
+                                <Form.Input
+                                    fluid
+                                    icon="lock"
+                                    iconPosition="left"
+                                    placeholder="Password"
+                                    type="password"
+                                    value={this.state.password}
+                                    onChange={this.passwordInputHandler}
+                                />
+                                { verificationForm }
+                                { signInButton }
+                                { resendCodeDiv }
+                            </Form>
+                            { warningDiv }
+                            { resendCodeMessageDiv }
+                            { forgotPasswordDiv }
+                        </Segment>
+                    </Dimmer.Dimmable>
+                    <div className={styles.orDiv}>Or</div>
                     <Button color='facebook' fluid onClick={() => Auth.federatedSignIn({provider: 'Facebook'})}>
                         Continue with Facebook
                     </Button>
-                    <div className={styles.orDiv}>Or</div>
-                    <div className={styles.passwordRecoveryDiv}>
-                        Forgot your password?
-                    </div>
                     <div className={styles.signUpDiv}>
                         Don't have an account yet?
                         <span className={styles.signUpLink} onClick={this.props.signUpClickHandler}>

@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { Redirect } from 'react-router-dom';
-import { Button, Form, Grid, Icon, Image, Segment, Message, Modal } from 'semantic-ui-react';
+import { Button, Form, Grid, Segment, Message, Loader, Dimmer } from 'semantic-ui-react';
 import { Auth } from "aws-amplify";
 
 import axios from '../../config/axios';
@@ -17,9 +15,10 @@ class SignUpPage extends Component {
         passwordValid: false,
         passwordMatchWarning: false,
         warning: "",
-        isAuthenticated: false,
         needVerification: false,
         isVerified: false,
+        resendCodeMessage: "",
+        processing: false
     };
 
     emailInputHandler = (event) => {
@@ -80,45 +79,60 @@ class SignUpPage extends Component {
     // TODO: make email unchangeable between signup and confirm code
     signUpHandler = () => {
         if (this.state.password === this.state.passwordConfirm) {
-            Auth.signUp({
+            this.setState({processing: true}, () => {
+                Auth.signUp({
                     username: this.state.email,
                     password: this.state.password
                 })
-                .then(() => {
-                    this.setState({
-                        needVerification: true,
+                    .then(() => {
+                        this.setState({
+                            needVerification: true,
+                            processing: false
+                        });
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        this.setState({warning: error.message, processing: false});
                     });
-                })
-                .catch(error => {
-                    console.log(error);
-                    this.setState({warning: error.message});
-                });
+            });
         } else {
             this.setState({passwordMatchWarning: true});
         }
     };
 
     confirmCodeHandler = () => {
-        Auth.confirmSignUp(this.state.email, this.state.confirmCode, {
-            // Optional. Force user confirmation irrespective of existing alias. By default set to True.
+        this.setState({processing: true}, () => {
+            Auth.confirmSignUp(this.state.email, this.state.confirmCode, {
+                // Optional. Force user confirmation irrespective of existing alias. By default set to True.
                 forceAliasCreation: true
             })
-            .then(() => {
-                console.log("signin")
-                Auth.signIn({username: this.state.email, password: this.state.password});
-            })
-            .then(() => {
-                console.log('signed in');
-                // this.setState({isAuthenticated: true});
-            })
-            .catch((error) => {
-                console.log(error);
-                this.setState({warning: error.message});
+                .then(() => {
+                    console.log("confirmed");
+                    return Auth.signIn({username: this.state.email, password: this.state.password});
+                })
+                .catch((error) => {
+                    console.log(error);
+                    this.setState({warning: error.message, resendCodeMessage: '', processing: false});
+                });
+        });
+    };
+
+    resendCodeHandler = () => {
+        if (!this.state.processing) {
+            this.setState({processing: true}, () => {
+                Auth.resendSignUp(this.state.email)
+                    .then(() => {
+                        this.setState({resendCodeMessage: "Verification Code Sent!", processing: false});
+                    })
+                    .catch(error => {
+                        this.setState({warning: error.message, processing: false});
+                    });
             });
+        }
     };
 
     render() {
-        let warningDiv = <div></div>;
+        let warningDiv;
         if (this.state.passwordMatchWarning) {
             warningDiv = (
                 <div className={styles.authWarningDiv}>
@@ -161,17 +175,33 @@ class SignUpPage extends Component {
             signUpButton = (
                 <Button
                     color="orange" fluid size="large"
-                    disabled={!this.state.passwordValid || this.state.passwordMatchWarning}
+                    disabled={!this.state.passwordValid || this.state.passwordMatchWarning || this.state.processing}
                     onClick={this.signUpHandler}>
                     Sign Up
                 </Button>
             )
         }
 
-        let authRedirect;
-        if (this.state.isAuthenticated) {
-            console.log('isAuthenticated');
-            authRedirect = <Redirect to="/"/>;
+        let resendCodeDiv;
+        if (this.state.needVerification) {
+            resendCodeDiv = (
+                <div className={styles.resendCodeDiv}>
+                    <span onClick={this.resendCodeHandler} className={this.state.processing ? '' : styles.resendCodeSpan}>
+                        Resend Verification Code
+                    </span>
+                </div>
+            );
+        }
+
+        let resendCodeMessageDiv;
+        if (this.state.resendCodeMessage !== '') {
+            resendCodeMessageDiv = (
+                <div className={styles.authWarningDiv}>
+                    <Message attached="bottom" positive>
+                        { this.state.resendCodeMessage }
+                    </Message>
+                </div>
+            )
         }
 
         const signUpDiv = (
@@ -183,44 +213,50 @@ class SignUpPage extends Component {
                     <div className={styles.signUpSubHeader}>
                         Discover and Share Music
                     </div>
-                    <Segment>
-                        <Form size="large">
-                            <Form.Input
-                                fluid
-                                icon="mail"
-                                iconPosition="left"
-                                placeholder="Email address"
-                                type="email"
-                                value={this.state.email}
-                                onChange={this.emailInputHandler}
-                                disabled={this.state.needVerification}
-                            />
-                            <Form.Input
-                                fluid
-                                icon="lock"
-                                iconPosition="left"
-                                placeholder="Password"
-                                type="password"
-                                value={this.state.password}
-                                onChange={this.passwordInputHandler}
-                                disabled={this.state.needVerification}
-                            />
-                            <Form.Input
-                                fluid
-                                icon="lock"
-                                iconPosition="left"
-                                placeholder="Confirm Password"
-                                type="password"
-                                value={this.state.passwordConfirm}
-                                onChange={this.passwordConfirmInputHandler}
-                                disabled={this.state.needVerification}
-                            />
-                            { verificationForm }
-                            { signUpButton }
-                        </Form>
-                        { warningDiv }
-                    </Segment>
-                    Resend Verification Code
+                    <Dimmer.Dimmable as={Segment} dimmed={this.state.processing}>
+                        <Dimmer active={this.state.processing} inverted>
+                            <Loader>Processing</Loader>
+                        </Dimmer>
+                        <Segment>
+                            <Form size="large">
+                                <Form.Input
+                                    fluid
+                                    icon="mail"
+                                    iconPosition="left"
+                                    placeholder="Email address"
+                                    type="email"
+                                    value={this.state.email}
+                                    onChange={this.emailInputHandler}
+                                    disabled={this.state.needVerification || this.state.processing}
+                                />
+                                <Form.Input
+                                    fluid
+                                    icon="lock"
+                                    iconPosition="left"
+                                    placeholder="Password"
+                                    type="password"
+                                    value={this.state.password}
+                                    onChange={this.passwordInputHandler}
+                                    disabled={this.state.needVerification || this.state.processing}
+                                />
+                                <Form.Input
+                                    fluid
+                                    icon="lock"
+                                    iconPosition="left"
+                                    placeholder="Confirm Password"
+                                    type="password"
+                                    value={this.state.passwordConfirm}
+                                    onChange={this.passwordConfirmInputHandler}
+                                    disabled={this.state.needVerification || this.state.processing}
+                                />
+                                { verificationForm }
+                                { signUpButton }
+                                { resendCodeDiv }
+                            </Form>
+                            { warningDiv }
+                            { resendCodeMessageDiv }
+                        </Segment>
+                    </Dimmer.Dimmable>
                     <div className={styles.orDiv}>Or</div>
                     <Button color='facebook' fluid onClick={() => Auth.federatedSignIn({provider: 'Facebook'})}>
                         Continue with Facebook
@@ -238,7 +274,6 @@ class SignUpPage extends Component {
         return (
             <div className={styles.containerDiv}>
                 { signUpDiv }
-                { authRedirect }
             </div>
         );
     }
