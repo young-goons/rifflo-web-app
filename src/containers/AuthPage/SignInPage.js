@@ -135,7 +135,9 @@ class AuthPage extends Component {
         } else {
             forgotPasswordDiv = (
                 <div className={styles.forgotPasswordDiv}>
-                    Forgot your password?
+                    <span onClick={this.props.forgotPasswordClickHandler} className={styles.signUpLink}>
+                        Forgot your password?
+                    </span>
                 </div>
             );
         }

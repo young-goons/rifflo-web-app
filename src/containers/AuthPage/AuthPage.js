@@ -4,12 +4,13 @@ import {Auth, Hub} from 'aws-amplify';
 
 import SignUpPage from './SignUpPage';
 import SignInPage from './SignInPage';
+import PasswordRecoveryPage from './PasswordRecoveryPage';
 import styles from './AuthPage.module.css';
 
 class AuthPage extends Component {
     state = {
-        isSignUpPage: true,
         isSignedIn: false,
+        pageType: 'signUp'
     };
 
     componentDidMount() {
@@ -35,19 +36,37 @@ class AuthPage extends Component {
     }
 
     signUpClickHandler = () => {
-        this.setState({isSignUpPage: true});
+        this.setState({pageType: 'signUp'});
     };
 
     signInClickHandler = () => {
-        this.setState({isSignUpPage: false});
+        this.setState({pageType: 'signIn'});
+    };
+
+    forgotPasswordClickHandler = () => {
+        this.setState({pageType: 'passwordRecovery'});
     };
 
     render () {
         let authPageDiv;
-        if (this.state.isSignUpPage) {
-            authPageDiv = <SignUpPage signInClickHandler={this.signInClickHandler}/>
-        } else {
-            authPageDiv = <SignInPage signUpClickHandler={this.signUpClickHandler}/>
+        if (this.state.pageType === 'signUp') {
+            authPageDiv = (
+                <SignUpPage signInClickHandler={this.signInClickHandler}/>
+            );
+        } else if (this.state.pageType === 'signIn') {
+            authPageDiv = (
+                <SignInPage
+                    forgotPasswordClickHandler={this.forgotPasswordClickHandler}
+                    signUpClickHandler={this.signUpClickHandler}
+                />
+            );
+        } else if (this.state.pageType === 'passwordRecovery') {
+            authPageDiv = (
+                <PasswordRecoveryPage
+                    forgotPasswordClickhandler={this.forgotPasswordClickHandler}
+                    signInClickHandler={this.signInClickHandler}
+                />
+            );
         }
 
         let authRedirect;

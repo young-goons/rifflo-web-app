@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { Button, Form, Grid, Segment, Message, Loader, Dimmer } from 'semantic-ui-react';
 import { Auth } from "aws-amplify";
 
-import axios from '../../config/axios';
 import styles from './AuthPage.module.css';
 import { containsNum, containsLowercase, containsSpecialChar } from "../../utils/stringUtils";
 
@@ -125,7 +124,7 @@ class SignUpPage extends Component {
                         this.setState({resendCodeMessage: "Verification Code Sent!", processing: false});
                     })
                     .catch(error => {
-                        this.setState({warning: error.message, processing: false});
+                        this.setState({warning: error.message, processing: false, resendCodeMessage: ''});
                     });
             });
         }
