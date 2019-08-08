@@ -1,40 +1,40 @@
 import React, { Component } from 'react';
-import {Auth} from "aws-amplify";
+import { Auth } from "aws-amplify";
 
 import SiteHeader from '../SiteHeader/SiteHeader';
 
 import styles from './UserPage.module.css';
+import axios from "../../config/axios";
 
 class UserPage extends Component {
     state = {
-        currentSession: null
+        authUserId: null,
+        authUserEmail: null,
+        authUsername: null,
+        jwtToken: null
     };
 
     componentDidMount() {
-        // try {
-        //     const currentSession = await Auth.currentSession();
-        //     this.setState({currentSession: currentSession});
-        //     console.log(this.state.currentSession);
-        // }
-        // catch(e) {
-        //     if (e !== 'No current user') {
-        //         alert(e);
-        //     }
-        // }
         Auth.currentSession()
             .then(currentSession => {
-                this.setState({currentSession: currentSession});
+                this.setState({
+                    authUserId: currentSession['idToken']['payload']['cognito:username'],
+                    authUserEmail: currentSession['idToken']['payload']['cognito:username'],
+                    jwtToken: currentSession['idToken']['jwtToken'],
+                });
+                const url = ''
             })
+            .catch(error => {
+                console.log(error);
+            });
 
     }
     render() {
         const renderDiv = (
             <div className={styles.containerDiv} ref={this.contextRef}>
                 <SiteHeader
-                    email={this.state.currentSession['idToken']['payload']['email']}
-                    userId={this.state.currentSession['idToken']['payload']['cognito:username']}
-                    username={this.state.currentSession['idToken']['payload']['preferred_username']}
-                    jwtToken={this.state.currentSession['idToken']['jwtToken']}
+                    userId={this.state.authUserId}
+                    username={this.state.authUsername}
                 />
             </div>
         );

@@ -10,12 +10,16 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
+import store from './store/store';
+
 Amplify.configure(config);
 
 const app = (
-    <BrowserRouter>
-        <App/>
-    </BrowserRouter>
+    <Provider store={store}>
+        <BrowserRouter>
+            <App/>
+        </BrowserRouter>
+    </Provider>
 );
 ReactDOM.render(app, document.getElementById('root'));
 

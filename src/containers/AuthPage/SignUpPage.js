@@ -3,6 +3,7 @@ import { Button, Form, Grid, Segment, Message, Loader, Dimmer } from 'semantic-u
 import { Auth } from "aws-amplify";
 
 import styles from './AuthPage.module.css';
+import axios from "../../config/axios";
 import { containsNum, containsLowercase, containsSpecialChar } from "../../utils/stringUtils";
 
 class SignUpPage extends Component {
@@ -73,9 +74,6 @@ class SignUpPage extends Component {
     };
 
     // TODO: check email format and email confirmation(?)
-    // TODO: check password constraints
-    // TODO: wait loading spinner to prevent double click
-    // TODO: make email unchangeable between signup and confirm code
     signUpHandler = () => {
         if (this.state.password === this.state.passwordConfirm) {
             this.setState({processing: true}, () => {
@@ -108,6 +106,16 @@ class SignUpPage extends Component {
                 .then(() => {
                     console.log("confirmed");
                     return Auth.signIn({username: this.state.email, password: this.state.password});
+                })
+                .then(() => {
+                    const url = '/signup';
+                    const newUser = {
+                        email: this.state.email
+                    };
+                    axios({method: 'POST', url: url, params: newUser})
+                        .then(response => {
+                            console.log(response);
+                        })
                 })
                 .catch((error) => {
                     console.log(error);

@@ -1,56 +1,14 @@
 import React, { Component } from 'react';
-import { Sticky, Grid, Search, Icon, Image, List } from 'semantic-ui-react';
+import { connect } from 'react-redux';
 import { Auth } from 'aws-amplify';
+import { Sticky, Grid, Search, Icon } from 'semantic-ui-react';
 
 import styles from './SiteHeader.module.css';
-import defaultProfileImg from '../../resources/defaultProfileImg.png';
-import axios from '../../config/axios';
 
 class SiteHeader extends Component {
-    state = {
-        userId: '',
-        email: '',
-        username: '',
-        jwtToken: '',
-        profileImgSrc: null,
-        imageLoadFail: false
-    };
-
-    componentWillReceiveProps(nextProps) {
-        if (this.state.userId === '' && this.state.email === '' && this.state.username === '' && this.state.jwtToken === '') {
-            this.setState({
-                userId: nextProps.userId,
-                email: nextProps.email,
-                username: nextProps.username,
-                jwtToken: nextProps.jwtToken
-            });
-            const headers = {
-                'Authorization': nextProps.jwtToken
-            };
-            const url = '/user/' + nextProps.userId  +'/profile/image';
-            axios({method: 'GET', url: url, headers: headers})
-                .then(response => {
-                    console.log(response);
-                    this.setState({profileImgSrc: response.data.url});
-                })
-                .catch(error => {
-                    console.log(error);
-                })
-        }
-    }
-
     signOutClickHandler = () => {
         Auth.signOut()
             .then(() => {
-                // this.setState({
-                //     userId: '',
-                //     email: '',
-                //     username: '',
-                //     jwtToken: '',
-                //     profileImgSrc: '',
-                //     imageLoadFail: false
-                // });
-                console.log(this.state);
                 this.props.history.push('/auth');
             })
             .catch(error => {
@@ -58,21 +16,17 @@ class SiteHeader extends Component {
             });
     };
 
-    render() {
-        console.log(this.props);
-        // let image;
-        // if (this.state.imageLoadFail || !this.state.profileImgSrc) {
-        //     image = <Image circular fluid size="mini" src={defaultProfileImg}/>;
-        // }
-        // else {
-        //     image = <Image circular fluid size="mini" src={this.state.profileImgSrc}
-        //              onError={(e) => {
-        //                  if (!this.state.imageLoadFail) {
-        //                      this.setState({imageLoadFail: true});
-        //                  }
-        //              }}/>;
-        // }
+    userPageClickHandler = () => {
+        if (this.props.authUsername) {
+            this.props.history.push('/user/' + this.props.authUsername);
+        }
+    };
 
+    userFindPageClickHandler = () => {
+
+    };
+
+    render() {
         return (
             <Sticky context={this.props.contextRef} >
                 <div className={styles.stickyDiv}>
@@ -91,10 +45,14 @@ class SiteHeader extends Component {
                             <Icon name="newspaper outline" size="large"/>
                         </Grid.Column>
                         <Grid.Column width={1} textAlign="center">
-                            <Icon name="user" size="large" />
+                            <Icon name="user" size="large" color="black" onClick={this.userPageClickHandler}
+                                  className={this.props.authUsername ? styles.userPageIcon : null}
+                            />
                         </Grid.Column>
                         <Grid.Column width={1} textAlign="center">
-                            <Icon name="add user" size="large"/>
+                            <Icon name="add user" size="large" onClick={this.userFindPageClickHandler}
+                                  className={styles.userPageIcon}
+                            />
                         </Grid.Column>
                         <Grid.Column width={1} textAlign="center" className={styles.settingsItem}>
                             <Icon name="setting" size="large" className={styles.settingsIcon}/>
@@ -104,10 +62,10 @@ class SiteHeader extends Component {
                                     onClick={this.signOutClickHandler}>Sign Out
                                 </span>
                                 <span className={styles.dropdownItemSpan}>
-                                    <a href="/help">Help</a>
+                                    <a className={styles.dropDownItemA} href="/help">Help</a>
                                 </span>
                                 <span className={styles.dropdownItemSpan}>
-                                    <a href="/contact">Contact</a>
+                                    <a className={styles.dropDownItemA} href="/contact">Contact</a>
                                 </span>
                             </div>
                         </Grid.Column>
@@ -119,4 +77,10 @@ class SiteHeader extends Component {
     }
 }
 
-export default SiteHeader;
+const mapStateToProps = state => {
+    return {
+        authUsername: state.auth.authUsername
+    }
+};
+
+export default connect(mapStateToProps, null)(SiteHeader);

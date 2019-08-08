@@ -1,27 +1,28 @@
 import React, { Component } from 'react';
-import { withAuthenticator, SignIn, SignUp, ConfirmSignUp, ForgotPassword } from 'aws-amplify-react';
 import { Route, Switch, Router } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
+import { connect } from 'react-redux';
+import { Auth } from 'aws-amplify';
 
-import { federationConfig, authPageTheme, signUpConfig } from "./config/signInConfig";
+import { loadAuthUser } from "./store/actions/auth";
 
 import ProtectedRoute from "./ProtectedRoute";
 import HelpPage from './containers/HelpPage/HelpPage';
 import UserPage from './containers/UserPage/UserPage';
 import AuthPage from './containers/AuthPage/AuthPage';
 
-import { I18n } from 'aws-amplify';
-
-const authScreenLabels = {
-    en: {
-        'Username': 'Email'
-    }
-};
-
-I18n.setLanguage('en');
-I18n.putVocabularies(authScreenLabels);
-
 class App extends Component {
+    componentDidMount() {
+        Auth.currentSession()
+            .then((currentSession) => {
+                console.log(currentSession);
+                this.props.onLoadAuthUser(currentSession['idToken']['jwtToken'])
+            })
+            .catch(error => {
+                console.log(error);
+            })
+    }
+
     render() {
         const routes = (
             <Switch>
@@ -40,12 +41,12 @@ class App extends Component {
     }
 }
 
-// export default withAuthenticator(App, false, [
-//     <SignIn/>,
-//     <SignUp/>,
-//     <ConfirmSignUp/>,
-//     <ForgotPassword/>
-// ], federationConfig, authPageTheme, signUpConfig, {usernameAttributes: 'email'});
 
-export default App;
+const mapDispatchToProps = dispatch => {
+    return {
+        onLoadAuthUser: (jwtToken) => dispatch(loadAuthUser(jwtToken))
+    }
+};
+
+export default connect(null, mapDispatchToProps)(App);
 
