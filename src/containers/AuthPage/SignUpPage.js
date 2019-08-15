@@ -107,16 +107,6 @@ class SignUpPage extends Component {
                     console.log("confirmed");
                     return Auth.signIn({username: this.state.email, password: this.state.password});
                 })
-                .then(() => {
-                    const url = '/signup';
-                    const newUser = {
-                        email: this.state.email
-                    };
-                    axios({method: 'POST', url: url, params: newUser})
-                        .then(response => {
-                            console.log(response);
-                        })
-                })
                 .catch((error) => {
                     console.log(error);
                     this.setState({warning: error.message, resendCodeMessage: '', processing: false});

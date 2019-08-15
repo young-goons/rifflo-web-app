@@ -4,7 +4,8 @@ const initialState = {
     authUserId: null,
     authUsername: null,
     authUserEmail: null,
-    authUserInfo: null
+    authUserInfo: null,
+    jwtToken: null
 };
 
 const loadAuthSuccess = (state, action) => {
@@ -13,7 +14,8 @@ const loadAuthSuccess = (state, action) => {
         authUserId: action.authUserId,
         authUsername: action.authUsername,
         authUserEmail: action.authUserEmail,
-        authUserInfo: action.authUserInfo
+        authUserInfo: action.authUserInfo,
+        jwtToken: action.jwtToken
     }
 };
 

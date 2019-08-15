@@ -19,6 +19,7 @@ class SiteHeader extends Component {
     userPageClickHandler = () => {
         if (this.props.authUsername) {
             this.props.history.push('/user/' + this.props.authUsername);
+            window.location.reload();
         }
     };
 

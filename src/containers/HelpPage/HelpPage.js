@@ -23,16 +23,6 @@ class HelpPage extends Component {
     }
 
     render () {
-        let currentSession;
-        if (this.state.currentSession) {
-            const headers = {
-                'Authorization': this.state.currentSession['idToken']['jwtToken']
-            };
-            // axios.get('http://127.0.0.1:5000/helloworld', {headers: headers})
-            //     .then(res => {
-            //         console.log(res);
-            //     });
-        }
         return (
             <div>
                 <SiteHeader

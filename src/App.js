@@ -15,7 +15,6 @@ class App extends Component {
     componentDidMount() {
         Auth.currentSession()
             .then((currentSession) => {
-                console.log(currentSession);
                 this.props.onLoadAuthUser(currentSession['idToken']['jwtToken'])
             })
             .catch(error => {
@@ -28,7 +27,7 @@ class App extends Component {
             <Switch>
                 <Route path="/auth" component={AuthPage}/>
                 <ProtectedRoute path="/help" component={HelpPage}/>
-                <ProtectedRoute path="/:username" component={UserPage}/>
+                <ProtectedRoute path="/user/:username" component={UserPage}/>
                 <ProtectedRoute path="/" component={HelpPage}/>
             </Switch>
         );
