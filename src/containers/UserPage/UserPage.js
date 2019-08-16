@@ -18,6 +18,11 @@ class UserPage extends Component {
         username: null,
         userInfo: null,
         checkUsernameExists: false,
+
+        followerArr: null,
+        followingArr: null,
+        isFollowed: false,
+        followProcessing: false
     };
 
     componentDidMount() {
@@ -46,11 +51,13 @@ class UserPage extends Component {
                     this.setState({
                         username: this.props.match.params.username,
                         userInfo: response.data.userInfo
-                    })
+                    });
                 })
                 .catch(error => {
                     console.log(error);
                 });
+            this.getFollowers(this.state.userId, nextProps.jwtToken);
+            this.getFollowing(this.state.userId, nextProps.jwtToken);
         } else if (this.state.username === this.props.authUsername) { // when own page
             if (this.props.username !== nextProps.authUsername) { // when authusername is changed
                 this.setState({username: nextProps.authUsername});
@@ -90,7 +97,75 @@ class UserPage extends Component {
         this.setState({isClipPlaying: null});
     };
 
+    getFollowers = (userId, jwtToken) => {
+        const url = "/user/" + userId + "/followers";
+        const headers = {
+            'Authorization': jwtToken
+        };
+        axios({method: 'GET', url: url, headers: headers})
+            .then(response => {
+                this.setState({
+                    followerArr: response.data.followerArr,
+                    isFollowed: response.data.followerArr.includes(this.props.authUserId)
+                });
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    };
+
+    getFollowing = (userId, jwtToken) => {
+        const url = "/user/" + userId + "/following";
+        const headers = {
+            'Authorization': jwtToken
+        };
+        axios({method: 'GET', url: url, headers: headers})
+            .then(response => {
+                this.setState({
+                    followingArr: response.data.followingArr,
+                });
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    };
+
+    followClickHandler = (userId, jwtToken) => {
+        let url = "/user/follow/" + userId;
+        let httpMethod;
+        if (this.state.isFollowed) {
+            httpMethod = 'DELETE';
+        } else {
+            httpMethod = 'POST';
+        }
+        const headers = {
+            'Authorization': jwtToken
+        };
+        this.setState({followProcessing: true}, () => {
+            axios({method: httpMethod, url: url, headers: headers})
+                .then(response => {
+                    const newFollowerArr = [...this.state.followerArr];
+                    if (this.state.isFollowed) {
+                        const index = newFollowerArr.indexOf(this.props.authUserId);
+                        if (index !== -1) newFollowerArr.splice(index, 1);
+                    } else {
+                        newFollowerArr.push(this.props.authUserId);
+                    }
+                    this.setState({
+                        followerArr: newFollowerArr,
+                        isFollowed: !this.state.isFollowed,
+                        followProcessing: false
+                    });
+                })
+                .catch(error => {
+                    console.log(error);
+                    this.setState({followProcessing: false});
+                });
+        });
+    };
+
     render() {
+        console.log(this.state.followerArr);
         let renderDiv;
         // // TODO: psuedo-randomize the order
         // const postDivArr = this.state.postArr.map((post, idx) => {
@@ -139,6 +214,13 @@ class UserPage extends Component {
                             userId={this.state.userId}
                             username={this.state.username}
                             userInfo={this.state.userInfo}
+
+                            followerArr={this.state.followerArr}
+                            followingArr={this.state.followingArr}
+                            isFollowed={this.state.isFollowed}
+                            followClickHandler={this.followClickHandler}
+                            followProcessing={this.state.followProcessing}
+
                             // shareCnt={this.state.postArr.length}
                             history={this.props.history}
                             sharesClickHandler={this.sharesClickHandler}

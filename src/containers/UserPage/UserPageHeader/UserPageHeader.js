@@ -9,9 +9,6 @@ import defaultHeaderImg from '../../../resources/defaultHeaderImg.png';
 import ImageUploader from "../../ImageUploader/ImageUploader";
 import EditInfoModal from "./EditInfoModal/EditInfoModal";
 // import UserInfoModal from "./UserInfoModal/UserInfoModal";
-// import { loadUserProfileImage, loadUserHeaderImage, uploadUserHeaderImage, deleteUserHeaderImage,
-//     uploadUserProfileImage, deleteUserProfileImage
-// } from "../../../store/actions/user";
 
 class UserPageHeader extends Component {
     /* UserPageHeader rendered after getting authUserId and userId
@@ -19,17 +16,8 @@ class UserPageHeader extends Component {
      */
 
     state = {
-        // userInfoReq: false, // flag user info requested
-        // isFollowed: null,
-        // followerReq: false, // flag to check if follower is requested
-        // followingReq: false, // flag to check if following is requested
-        // followerArr: null,
-        // followingArr: null,
-        // profileImageReady: false,
-        
-        // headerImageReady: false,
-        // editInfoModalOpen: false,
         // userInfoModalOpen: false
+
         profileImgSrc: null,
         profileImgLoadFail: false,
         profileImgModalOpen: false,
@@ -38,33 +26,14 @@ class UserPageHeader extends Component {
         headerImgSrc: null,
         headerImgLoadFail: false,
         headerImgModalOpen: false,
-        headerImgDeleting: false
+        headerImgDeleting: false,
+
+        editInfoModalOpen: false
     };
 
     componentDidMount() {
         this.getProfileImgSrc();
         this.getHeaderImgSrc();
-        if (this.props.userId) {
-            if (this.state.isFollowed === null && this.state.followerArr === null) {
-                this.getFollowers(this.props.userId);
-            }
-            if (this.state.followingArr === null) {
-                this.getFollowing(this.props.userId);
-            }
-        }
-    }
-
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.userId) {
-            if (this.state.isFollowed === null && this.state.followerArr === null && !this.state.followerReq) {
-                this.setState({followerReq: true});
-                this.getFollowers(nextProps.userId);
-            }
-            if (this.state.followingArr === null && !this.state.followingReq) {
-                this.setState({followingReq: true});
-                this.getFollowing(nextProps.userId);
-            }
-        }
     }
 
     getProfileImgSrc = () => {
@@ -217,60 +186,6 @@ class UserPageHeader extends Component {
         });
     };
 
-    getFollowers = (userId) => {
-        const url = "/user/" + userId + "/followers";
-        axios({method: 'GET', url: url})
-            .then(response => {
-                this.setState({
-                    followerArr: response.data.followerArr,
-                    isFollowed: response.data.followerArr.includes(this.props.authUserId)
-                });
-            })
-            .catch(error => {
-                console.log(error);
-            });
-    };
-
-    getFollowing = (userId) => {
-        const url = "/user/" + userId + "/following";
-        axios({method: 'GET', url: url})
-            .then(response => {
-                this.setState({
-                    followingArr: response.data.followingArr,
-                });
-            })
-            .catch(error => {
-                console.log(error);
-            });
-    };
-
-    followClickHandler = () => {
-        let url = "/user/follow/" + this.props.userId;
-        let httpMethod;
-        if (this.state.isFollowed) {
-            httpMethod = 'DELETE';
-        } else {
-            httpMethod = 'POST';
-        }
-        axios({method: httpMethod, url: url})
-            .then(response => {
-                const newFollowerArr = [...this.state.followerArr];
-                if (this.state.isFollowed) {
-                    const index = newFollowerArr.indexOf(this.props.authUserId);
-                    if (index !== -1) newFollowerArr.splice(index, 1);
-                } else {
-                    newFollowerArr.push(this.props.authUserId);
-                }
-                this.setState({
-                    followerArr: newFollowerArr,
-                    isFollowed: !this.state.isFollowed
-                })
-            })
-            .catch(error => {
-                alert(error);
-            })
-    };
-
     profileImgHandleOpen = () => {
         this.setState({profileImgModalOpen: true});
     };
@@ -418,46 +333,40 @@ class UserPageHeader extends Component {
                     </Modal>
                 )
             }
-        } else {
-
-        }
-        if (this.props.userId && this.props.authUserId !== this.props.userId) { // other user's page
-        //     followButtonDiv = (
-        //         <div className={styles.followButtonDiv}>
-        //             <Button as='div' labelPosition='right' size='large' compact className={styles.followButton}>
-        //                 <Button size='medium' compact color={this.state.isFollowed ? "grey" : "teal"}
-        //                         onClick={this.followClickHandler}>
-        //                             <span className={styles.buttonSpan}>
-        //                                 {this.state.isFollowed ? "following" : "follow"}
-        //                             </span>
-        //                 </Button>
-        //                 <Label size='medium' basic pointing='left'
-        //                        color={this.state.isFollowed ? "grey" : "teal"}>
-        //                     {this.state.followerArr ? this.state.followerArr.length : 0}
-        //                 </Label>
-        //             </Button>
-        //         </div>
-        //     );
-        //     profileImg = <img className={styles.profileImg} alt="profileImage"
-        //                       src={this.props.profileImgSrc ? this.props.profileImgSrc : defaultProfileImage} />;
-        //     headerImg = <img className={styles.headerImg} alt="headerImage"
-        //                      src={this.props.headerImgSrc ? this.props.headerImgSrc : defaultHeaderImage} />;
-        //     userInfoIcon = (
-        //         <span className={styles.userIconSpan}>
-        //              <Icon name="info" size="tiny" onClick={this.userInfoHandleOpen}/>
-        //          </span>
-        //     );
-        //     userInfoModal = (
-        //         <Modal trigger={userInfoIcon} size="tiny" centered={true}
-        //                open={this.state.userInfoModalOpen} onClose={this.userInfoHandleClose}>
-        //             <UserInfoModal
-        //                 userId={this.props.userId}
-        //             />
-        //         </Modal>
-        //     );
-        } else {
-
-        
+        } else { // other user's page
+            if (this.props.followerArr) {
+                followButtonDiv = (
+                    <div className={styles.followButtonDiv}>
+                        <Button as='div' labelPosition='right' size='large' compact className={styles.followButton}>
+                            <Button size='medium' compact color={this.props.isFollowed ? "grey" : "teal"}
+                                    onClick={() => {this.props.followClickHandler(this.props.userId, this.props.jwtToken)}}
+                                    disabled={this.props.followProcessing}
+                            >
+                                        <span className={styles.buttonSpan}>
+                                            {this.props.isFollowed ? "following" : "follow"}
+                                        </span>
+                            </Button>
+                            <Label size='medium' basic pointing='left'
+                                    color={this.props.isFollowed ? "grey" : "teal"}>
+                                {this.props.followerArr ? this.props.followerArr.length : 0}
+                            </Label>
+                        </Button>
+                    </div>
+                );
+            }
+            // userInfoIcon = (
+            //     <span className={styles.userIconSpan}>
+            //             <Icon name="info" size="tiny" onClick={this.userInfoHandleOpen}/>
+            //         </span>
+            // );
+            // userInfoModal = (
+            //     <Modal trigger={userInfoIcon} size="tiny" centered={true}
+            //             open={this.state.userInfoModalOpen} onClose={this.userInfoHandleClose}>
+            //         <UserInfoModal
+            //             userId={this.props.userId}
+            //         />
+            //     </Modal>
+            // );
         }
 
         return (
@@ -469,7 +378,7 @@ class UserPageHeader extends Component {
                         {/*{ userInfoModal }*/}
                     </div>
                     { ownPage ? profileImgModal : profileImg }
-                    {/*{ followButtonDiv }*/}
+                    { followButtonDiv }
                     <Grid.Column width={16}>
                         <div className={styles.headerImgDiv}>
                             { ownPage ? headerImgModal : headerImg }
@@ -497,14 +406,14 @@ class UserPageHeader extends Component {
                     <Grid.Column width={3} textAlign="center" className={styles.userPageMenu}>
                         <div className={styles.userPageMenuEntry}>
                             <span className={styles.pageSubheader} onClick={this.props.followersClickHandler}>
-                                {this.state.followerArr ? this.state.followerArr.length : 0} followers
+                                {this.props.followerArr ? this.props.followerArr.length : 0} followers
                             </span>
                         </div>
                     </Grid.Column>
                     <Grid.Column width={3} textAlign="center" className={styles.userPageMenu}>
                         <div className={styles.userPageMenuEntry}>
                             <span className={styles.pageSubheader} onClick={this.props.followingClickHandler}>
-                                {this.state.followingArr ? this.state.followingArr.length : 0} following
+                                {this.props.followingArr ? this.props.followingArr.length : 0} following
                             </span>
                         </div>
                     </Grid.Column>
@@ -520,16 +429,5 @@ const mapStateToProps = state => {
         jwtToken: state.auth.jwtToken
     };
 };
-
-// const mapDispatchToProps = dispatch => {
-//     return {
-//         onLoadUserProfileImage: (userId) => dispatch(loadUserProfileImage(userId)),
-//         onUploadProfileImage: (userId, formData) => dispatch(uploadUserProfileImage(userId, formData)),
-//         onDeleteProfileImage: (userId) => dispatch(deleteUserProfileImage(userId)),
-//         onLoadUserHeaderImage: (userId) => dispatch(loadUserHeaderImage(userId)),
-//         onUploadHeaderImage: (userId, formData) => dispatch(uploadUserHeaderImage(userId, formData)),
-//         onDeleteHeaderImage: (userId) => dispatch(deleteUserHeaderImage(userId))
-//     };
-// };
 
 export default connect(mapStateToProps, null)(UserPageHeader);

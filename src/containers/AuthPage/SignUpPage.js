@@ -104,7 +104,6 @@ class SignUpPage extends Component {
                 forceAliasCreation: true
             })
                 .then(() => {
-                    console.log("confirmed");
                     return Auth.signIn({username: this.state.email, password: this.state.password});
                 })
                 .catch((error) => {
