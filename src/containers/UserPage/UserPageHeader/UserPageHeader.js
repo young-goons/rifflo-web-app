@@ -354,6 +354,8 @@ class UserPageHeader extends Component {
                     </div>
                 );
             }
+
+            /* Info Modal add private/public option to show info */
             // userInfoIcon = (
             //     <span className={styles.userIconSpan}>
             //             <Icon name="info" size="tiny" onClick={this.userInfoHandleOpen}/>
@@ -392,7 +394,7 @@ class UserPageHeader extends Component {
                     <Grid.Column width={3} textAlign="center" className={styles.userPageMenu}>
                         <div className={styles.userPageMenuEntry}>
                             <span className={styles.pageSubheader} onClick={this.props.sharesClickHandler}>
-                                {/*{this.props.shareCnt} { this.state.shareCnt <= 1 ? "share" : "shares" }*/}
+                                {this.props.shareCnt} { this.state.shareCnt <= 1 ? "share" : "shares" }
                             </span>
                         </div>
                     </Grid.Column>

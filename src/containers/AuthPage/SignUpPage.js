@@ -3,7 +3,6 @@ import { Button, Form, Grid, Segment, Message, Loader, Dimmer } from 'semantic-u
 import { Auth } from "aws-amplify";
 
 import styles from './AuthPage.module.css';
-import axios from "../../config/axios";
 import { containsNum, containsLowercase, containsSpecialChar } from "../../utils/stringUtils";
 
 class SignUpPage extends Component {

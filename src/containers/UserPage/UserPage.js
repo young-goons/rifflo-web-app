@@ -6,14 +6,15 @@ import axios from '../../config/axios';
 import SiteHeader from '../SiteHeader/SiteHeader';
 import UserPageHeader from './UserPageHeader/UserPageHeader';
 // import SharedPost from './SharedPost/SharedPost';
+import PostEditor from './PostEditor/PostEditor';
 // import History from './History/History';
-// import FollowList from './FollowList/FollowList';
+import FollowList from './FollowList/FollowList';
 import NoUserPage from './NoUserPage/NoUserPage';
-// import PostEditor from './PostEditor/PostEditor';
 import styles from './UserPage.module.css';
 
 class UserPage extends Component {
     state = {
+        pageContent: 'shares', // one of "shares", "followers", "following", "history",
         userId: null,
         username: null,
         userInfo: null,
@@ -82,11 +83,15 @@ class UserPage extends Component {
     };
 
     followersClickHandler = () => {
-        this.setState({pageContent: 'followers'});
+        if (this.state.followerArr !== null) {
+            this.setState({pageContent: 'followers'});
+        }
     };
 
     followingClickHandler = () => {
-        this.setState({pageContent: 'following'});
+        if (this.state.followingArr !== null) {
+            this.setState({pageContent: 'following'});
+        }
     };
 
     startPlayingClip = (postId) => {
@@ -165,8 +170,7 @@ class UserPage extends Component {
     };
 
     render() {
-        console.log(this.state.followerArr);
-        let renderDiv;
+        let renderDiv, contentDiv;
         // // TODO: psuedo-randomize the order
         // const postDivArr = this.state.postArr.map((post, idx) => {
         //     return (
@@ -185,29 +189,27 @@ class UserPage extends Component {
         //     );
         // });
         //
-        // if (this.state.pageContent === 'shares') {
-        //     contentDiv = postDivArr;
-        // } else if (this.state.pageContent === 'followers') {
-        //     contentDiv = <FollowList followType='followers' userId={this.state.userId}/>;
-        // } else if (this.state.pageContent === 'following') {
-        //     contentDiv = <FollowList followType='following' userId={this.state.userId}/>;
-        // } else if (this.state.pageContent === 'history') {
-        //     contentDiv = <History authUserId={this.state.authUserId} userId={this.state.userId}/>
-        // }
+        if (this.state.pageContent === 'shares') {
+            // contentDiv = postDivArr;
+        } else if (this.state.pageContent === 'followers') {
+            contentDiv = <FollowList followType='followers' userId={this.state.userId} followArr={this.state.followerArr}/>;
+        } else if (this.state.pageContent === 'following') {
+            contentDiv = <FollowList followType='following' userId={this.state.userId} followArr={this.state.followingArr}/>;
+        } else if (this.state.pageContent === 'history') {
+            // contentDiv = <History authUserId={this.state.authUserId} userId={this.state.userId}/>
+        }
 
         if (this.props.authUserId) {
             let userPageDiv;
             if (this.state.checkUsernameExists && this.state.userId === null) {
                 userPageDiv = <NoUserPage/>;
             } else {
-
-                // userPageDiv = <div>{this.state.userId}</div>
-                // let postUploadDiv;
-                // if (this.props.authUserInfo.username === username) {
-                //     postUploadDiv = (
-                //         <PostEditor/>
-                //     );
-                // }
+                let postUploadDiv;
+                if (this.props.authUsername === this.props.match.params.username) {
+                    postUploadDiv = (
+                        <PostEditor/>
+                    );
+                }
                 userPageDiv = (
                     <div className={styles.userPageContainerDiv}>
                         <UserPageHeader
@@ -228,10 +230,10 @@ class UserPage extends Component {
                             followersClickHandler={this.followersClickHandler}
                             followingClickHandler={this.followingClickHandler}
                         />
-                        {/*<div className={styles.userPageContentDiv}>*/}
-                        {/*    { this.state.pageContent === 'shares' ? postUploadDiv : null }*/}
-                        {/*    { contentDiv }*/}
-                        {/*</div>*/}
+                        <div className={styles.userPageContentDiv}>
+                           { this.state.pageContent === 'shares' ? postUploadDiv : null }
+                           { contentDiv }
+                        </div>
                     </div>
                 );
             }
@@ -261,13 +263,5 @@ const mapStateToProps = state => {
         jwtToken: state.auth.jwtToken
     };
 };
-
-// const mapDispatchToProps = dispatch => {
-//     return {
-//         onLoadAuthUser: (userId) => dispatch(loadAuthUser(userId)),
-//         onLoadUserPosts: (userId) => dispatch(loadUserPosts(userId)),
-//         onLoadUserUpdatedPosts: (postId, postArr) => dispatch(loadUserUpdatedPosts(postId, postArr))
-//     };
-// };
 
 export default connect(mapStateToProps, null)(UserPage);

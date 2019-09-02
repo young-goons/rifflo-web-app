@@ -7,5 +7,5 @@ export const containsLowercase = (inputStr) => {
 };
 
 export const containsSpecialChar = (inputStr) => {
-    return /[~`!@#$%\^&*\(\)\[\]{}\?\.\\/":;',<>|-]/g.test(inputStr);
+    return /[~`!@#$%^&*()[\]{}?.\\/":;',<>|-]/g.test(inputStr);
 };
