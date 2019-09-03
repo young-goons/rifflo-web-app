@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Grid, Button, Modal } from 'semantic-ui-react';
+import { Grid, Button, Modal, Dimmer, Loader } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 
 import axios from '../../../config/axios';
@@ -27,7 +27,10 @@ class PostEditor extends Component {
         warning: '',
         songId: null,
         songS3Path: null,
+        
+        songUploaded: false,
         uploadingSong: false,
+        uploadingPost: false,
 
         content: '',
         tags: '',
@@ -103,15 +106,15 @@ class PostEditor extends Component {
     };
 
     uploadClickHandler = (songFile, startTime, endTime) => {
-        if (endTime - startTime > 15 || endTime - startTime < 12) {
+        if (endTime - startTime > 15.01 || endTime - startTime < 11.99) {
             this.setState({warning: "Clip length must be between 12 to 15 seconds"});
-        } else { // upload song
+        } else {
             const song_post_url = '/song';
             const headers = {
                 'Authorization': this.props.jwtToken
             };
             let songS3Path;
-            this.setState({uploadingSong: true}, () => {
+            this.setState({uploadingSong: true, songFile: songFile}, () => {
                 // get presigned post url for s3 upload
                 axios({method: 'POST', url: song_post_url, headers: headers, data: {filename: songFile.name}})
                     .then(response => {
@@ -132,7 +135,22 @@ class PostEditor extends Component {
                             headers: {'content-type': 'multipart/form-data'}
                         });
                     })
-                    .then(response => {
+                    .then(() => {
+                        // call endpoint to invoke Labmda function to upload clip to S3
+                        const clipUrl = '/clip';
+                        const clipInfo = {
+                            startTime: startTime.toFixed(2),
+                            endTime: endTime.toFixed(2),
+                            songFile: songFile.name
+                        };
+                        return axios({
+                            method: 'POST',
+                            url: clipUrl,
+                            headers: headers,
+                            data: clipInfo
+                        });
+                    })
+                    .then(() => {
                         // upload song info to RDS
                         const song_info_url = '/song/info';
                         return axios({
@@ -142,19 +160,20 @@ class PostEditor extends Component {
                             data: {songInfo: this.state.songInfo, songPath: songS3Path}
                         });
                     })
-                    .then(() => {
+                    .then(response => {
                         this.setState({
-                            songFile: songFile,
                             songS3Path: songS3Path,
-                            startTime: startTime,
-                            endTime: endTime,
+                            startTime: startTime.toFixed(2),
+                            endTime: endTime.toFixed(2),
                             modalOpen: false,
                             warning: null,
+                            songUploaded: true,
                             uploadingSong: false,
+                            songId: response.data.songId
                         });
                     })
                     .catch(error => {
-                        console.log(error.response);
+                        console.log(error);
                         this.setState({
                             uploadingSong: false
                         });
@@ -168,42 +187,70 @@ class PostEditor extends Component {
     // upload song with a modal and you can cut it from the userpage i.e.
     // separate song upload request and song cutting request into separate operation instead of changing it
     sharePostHandler = () => {
-        
-        let songPath;
-        
-            .then(response => {
-                // upload clip to s3 and its info to database
-                const clipUrl = '/clip';
-                const clipInfo = {
-                    key: songPath,
-                    startTime: this.state.startTime,
-                    endTime: this.state.endTime
-                };
-                return axios({
-                    method: 'POST',
-                    url: clipUrl,
-                    headers: headers,
-                    data: clipInfo
+        const postUrl = '/post';
+        const headers = {
+            'Authorization': this.props.jwtToken
+        };
+        const songFileName = this.state.songFile.name;
+        const clipFileName = songFileName.split('.').slice(0, -1).join('.') + '_' + this.state.startTime + '_' + this.state.endTime + '.' + songFileName.split('.').slice(-1);
+        const postParams = {
+            content: this.state.content,
+            tags: this.state.tags,
+            songId: this.state.songId,
+            startTime: this.state.startTime,
+            endTime: this.state.endTime,
+            songFile: songFileName,
+            clipFile: clipFileName
+        };
+        this.setState({uploadingPost: true}, () => {
+            axios({method: 'POST', url: postUrl, headers: headers, data: postParams})
+                .then(() => {
+                    this.setState({
+                        // reset state
+                        songInfo: {
+                            track: '', artist: '', album: '',
+                            spotifyUrl: '', youtubeUrl: '', soundcloudUrl: '',
+                            bandcampUrl: '', applemusicUrl: '', otherUrl: '',
+                        },
+                        songFile: null,
+                        startTime: 0,
+                        endTime: 15,
+                        warning: '',
+                        songId: null,
+                        songS3Path: null,
+                        
+                        songUploaded: false,
+                        uploadingSong: false,
+                        uploadingPost: false,
+
+                        content: '',
+                        tags: '',
+
+                        songUploadWarning: false,
+                        modalOpen: false
+                    })
                 })
-            })
-            .catch(error => {
-                console.log(error.response);
-            });
+                .catch(error => {
+                    console.log(error);
+                    this.setState({
+                        uploadingPost: false
+                    });
+                });
+        });
     };
 
     render() {
-        const browseButton = (
-            <div className={styles.browseButtonDiv}>
-                <Button onClick={this.handleOpen}>Browse</Button>
-            </div>
-        );
-        const editButton = (
-            <div className={styles.editUploadButtonDiv}>
-                <Button onClick={this.handleOpen} size="mini">Edit</Button>
-            </div>
-        );
+        let browseButton;
+        if (!this.state.songFile) {
+            browseButton = (
+                <div className={styles.browseButtonDiv}>
+                    <Button onClick={this.handleOpen}>Browse</Button>
+                </div>
+            );
+        }
+
         const songUploadModal = (
-            <Modal trigger={ this.state.songFile ? editButton : browseButton } size="tiny"
+            <Modal trigger={ browseButton } size="tiny"
                    open={this.state.modalOpen} onClose={this.handleClose}>
                 <SongUploader
                     songInfo={this.state.songInfo}
@@ -229,7 +276,7 @@ class PostEditor extends Component {
                 { songUploadModal }
             </div>
         );
-        if (this.state.songFile) {
+        if (this.state.songUploaded) {
             const songInfoDiv = (
                 <Grid>
                     <Grid.Row className={styles.songInfoFirstRow}>
@@ -253,7 +300,7 @@ class PostEditor extends Component {
                             Clip Start
                         </Grid.Column>
                         <Grid.Column width="11" textAlign="left" className={styles.songInfoColumn}>
-                            {this.state.startTime.toFixed(2)}
+                            {this.state.startTime}
                         </Grid.Column>
                     </Grid.Row>
                     <Grid.Row className={styles.songInfoRow}>
@@ -261,7 +308,7 @@ class PostEditor extends Component {
                             Clip End
                         </Grid.Column>
                         <Grid.Column width="11" textAlign="left" className={styles.songInfoColumn}>
-                            {this.state.endTime.toFixed(2)}
+                            {this.state.endTime}
                         </Grid.Column>
                     </Grid.Row>
                 </Grid>
@@ -273,8 +320,19 @@ class PostEditor extends Component {
                 </div>
             )
         }
+
+        let uploadingSpinner;
+        if (this.state.uploadingPost) {
+            uploadingSpinner = (
+                <Dimmer active inverted>
+                    <Loader>Sharing</Loader>
+                </Dimmer>
+            );
+        }
+
         return (
             <Grid columns="2">
+                { uploadingSpinner }
                 <Grid.Column>
                     { songUploadDiv }
                 </Grid.Column>

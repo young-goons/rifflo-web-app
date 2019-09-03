@@ -292,7 +292,7 @@ class SongUploader extends Component {
         if (this.props.uploadingSong) {
             uploadingSpinner = (
                 <Dimmer active inverted>
-                    <Loader>Uploading</Loader>
+                    <Loader>Uploading Clip</Loader>
                 </Dimmer>
             );
         }
